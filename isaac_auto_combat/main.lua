@@ -3,6 +3,7 @@ local AutoCombatMod = RegisterMod("Auto Combat Handler", 1)
 local game = Game()
 
 local blackboard = require("isaac_auto_combat.lib.blackboard")
+local sense = require("isaac_auto_combat.lib.sense")
 local debugui = require("isaac_auto_combat.lib.debugui")
 local act = require("isaac_auto_combat.lib.act")
 
@@ -58,6 +59,8 @@ end
 reset_intent()
 
 blackboard.update(state)
+sense.init(state)
+sense.update(state)
 debugui.init(state)
 debugui.update(state)
 act.init(state)
@@ -80,6 +83,7 @@ local function apply_toggle(source)
   state.telemetry = state.telemetry or {}
   state.telemetry.lastToggleSource = source or state.telemetry.lastToggleSource
 
+  sense.update(state)
   act.update(state)
   debugui.update(state)
 end
@@ -112,6 +116,8 @@ local function on_post_update()
   end
 
   blackboard.update(state)
+
+  sense.update(state)
 
   check_toggle_keyboard()
 
