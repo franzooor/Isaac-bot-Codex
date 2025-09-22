@@ -5,6 +5,7 @@ local game = Game()
 local blackboard = require("isaac_auto_combat.lib.blackboard")
 local debugui = require("isaac_auto_combat.lib.debugui")
 local act = require("isaac_auto_combat.lib.act")
+local controller = require("isaac_auto_combat.lib.controller")
 
 local defaults = require("isaac_auto_combat.config.defaults")
 local userPrefs = require("isaac_auto_combat.config.user_prefs")
@@ -59,6 +60,8 @@ reset_intent()
 blackboard.update(state)
 debugui.init(state)
 act.init(state)
+controller.init(state)
+controller.reset(state)
 
 local function on_post_update()
   if game:IsPaused() then
@@ -73,6 +76,7 @@ local function on_post_update()
     state.mode = "idle"
   end
 
+  controller.update(state)
   act.update(state)
   debugui.update(state)
 end
@@ -88,6 +92,7 @@ local function on_post_new_room()
     state.mode = "manual"
   end
   reset_intent()
+  controller.reset(state)
 end
 
 local function on_input_action(_, entity, hook, action)
@@ -112,9 +117,11 @@ local function on_input_action(_, entity, hook, action)
       toggled = true
       if state.enabled then
         state.mode = "idle"
+        controller.reset(state)
       else
         state.mode = "manual"
         reset_intent()
+        controller.reset(state)
       end
     end
 
