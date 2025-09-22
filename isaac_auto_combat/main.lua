@@ -106,7 +106,7 @@ local function on_input_action(entity, hook, action)
 
   if player and hook == InputHook.IS_ACTION_TRIGGERED and action == state.config.toggleAction then
     local toggled = false
-    if Input.IsActionTriggered(action, player.ControllerIndex) and state.lastToggleFrame ~= state.frame then
+    if state.lastToggleFrame ~= state.frame then
       state.enabled = not state.enabled
       state.lastToggleFrame = state.frame
       toggled = true
