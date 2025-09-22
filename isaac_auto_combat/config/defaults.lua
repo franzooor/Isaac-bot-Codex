@@ -1,3 +1,4 @@
+-- Default configuration values for the auto combat mod.
 return {
   -- Default toggle uses the ö key (shares the semicolon scancode on QWERTZ
   -- layouts). Players can change this to another keyboard key or bind a

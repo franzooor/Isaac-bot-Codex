@@ -170,11 +170,17 @@ local function on_input_action(entity, hook, action)
   end
 
   if state.config.toggleAction ~= nil and action == state.config.toggleAction then
+    local toggled = false
     if hook == InputHook.IS_ACTION_TRIGGERED and state.lastToggleFrame ~= state.frame then
       apply_toggle("action")
+      toggled = true
     end
 
-    return suppress_action(hook)
+    if toggled or state.enabled then
+      return suppress_action(hook)
+    end
+
+    return nil
   end
 
   local result = act.on_input(state, hook, action)
