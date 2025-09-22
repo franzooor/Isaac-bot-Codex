@@ -90,7 +90,7 @@ local function on_post_new_room()
   reset_intent()
 end
 
-local function on_input_action(entity, hook, action)
+local function on_input_action(_, entity, hook, action)
   local player = entity and entity:ToPlayer()
   if player and player.ControllerIndex ~= 0 then
     return nil
