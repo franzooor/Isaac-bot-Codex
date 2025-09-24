@@ -24,14 +24,38 @@ local function toggle_enabled(state)
 
   if state.enabled then
     state.mode = "idle"
+    if print then
+      print("[AutoCombat] Toggled ON")
+    end
   else
     state.mode = "manual"
     blackboard.reset_intent(state)
+    if print then
+      print("[AutoCombat] Toggled OFF")
+    end
   end
 
   controller.reset(state)
 
   return true
+end
+
+local function resolve_toggle_key(config)
+  if not config then
+    return nil
+  end
+
+  local key = config.toggleKey
+
+  if type(key) ~= "number" then
+    key = nil
+  end
+
+  if key == nil and Keyboard ~= nil then
+    key = Keyboard.KEY_G
+  end
+
+  return key
 end
 
 local function deep_copy(tbl)
@@ -83,10 +107,20 @@ local function on_post_update()
   local playerPos = player and player.Position or nil
   blackboard.update(state, playerPos)
 
-  if player and state.config.toggleKey and Input and Input.IsButtonTriggered then
-    local controllerIndex = player.ControllerIndex or 0
-    if controllerIndex <= 0 and Input.IsButtonTriggered(state.config.toggleKey, controllerIndex) then
-      toggle_enabled(state)
+  if player and Input and Input.IsButtonTriggered then
+    local toggleKey = resolve_toggle_key(state.config)
+
+    if toggleKey ~= nil then
+      local toggled = false
+
+      if Input.IsButtonTriggered(toggleKey, 0) then
+        toggled = toggle_enabled(state)
+      end
+
+      local controllerIndex = player.ControllerIndex or 0
+      if not toggled and controllerIndex > 0 and Input.IsButtonTriggered(toggleKey, controllerIndex) then
+        toggle_enabled(state)
+      end
     end
   end
 
