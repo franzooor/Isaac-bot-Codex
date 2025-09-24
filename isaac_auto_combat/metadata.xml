@@ -1,7 +1,9 @@
 <metadata>
   <name>Auto Combat Handler</name>
   <directory>isaac_auto_combat</directory>
+  <enabled>true</enabled>
   <version>0.0.1</version>
   <description>Automated combat assistant (Phase 0 bootstrap)</description>
   <api_version>5</api_version>
+  <content_directory>content</content_directory>
 </metadata>
