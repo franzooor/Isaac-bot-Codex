@@ -42,20 +42,7 @@ local state = blackboard.init()
 state.config = merge_tables(defaults, userPrefs)
 state.lastToggleFrame = -120
 
-local function reset_intent()
-  state.intent = {
-    move = Vector(0, 0),
-    shoot = Vector(0, 0),
-    fire = false,
-    useActive = false,
-    useBomb = false,
-    dropCard = false,
-    usePill = false,
-    sequenceControls = {},
-  }
-end
-
-reset_intent()
+blackboard.reset_intent(state)
 
 blackboard.update(state)
 debugui.init(state)
@@ -68,7 +55,9 @@ local function on_post_update()
     return
   end
 
-  blackboard.update(state)
+  local player = Isaac.GetPlayer(0)
+  local playerPos = player and player.Position or nil
+  blackboard.update(state, playerPos)
 
   if not state.enabled then
     state.mode = "manual"
@@ -76,7 +65,7 @@ local function on_post_update()
     state.mode = "idle"
   end
 
-  controller.update(state)
+  controller.update(state, player)
   act.update(state)
   debugui.update(state)
 end
@@ -91,7 +80,7 @@ local function on_post_new_room()
   else
     state.mode = "manual"
   end
-  reset_intent()
+  blackboard.reset_intent(state)
   controller.reset(state)
 end
 
@@ -120,7 +109,7 @@ local function on_input_action(_, entity, hook, action)
         controller.reset(state)
       else
         state.mode = "manual"
-        reset_intent()
+        blackboard.reset_intent(state)
         controller.reset(state)
       end
     end

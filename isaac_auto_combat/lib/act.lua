@@ -68,6 +68,18 @@ function Act.init(state)
   }
 end
 
+local function apply_sequence_controls(outputs, sequence)
+  if not sequence or not sequence.buttons then
+    return
+  end
+
+  for action, entry in pairs(sequence.buttons) do
+    outputs.pressed[action] = entry.pressed or false
+    outputs.triggered[action] = entry.triggered or false
+    outputs.values[action] = entry.value or (entry.pressed and 1 or 0)
+  end
+end
+
 function Act.update(state)
   if not state or not state.act then
     return
@@ -81,9 +93,17 @@ function Act.update(state)
   end
 
   local intent = state.intent or {}
+  local sequence = intent.sequenceControls
 
-  encodeDirectionalIntent(outputs, intent.move, actionMap.move)
-  encodeDirectionalIntent(outputs, intent.shoot, actionMap.shoot)
+  local moveVector = sequence and sequence.move or intent.move
+  encodeDirectionalIntent(outputs, moveVector, actionMap.move)
+
+  local shootVector = sequence and sequence.shoot or intent.shoot
+  local wantsFire = intent.fire == nil and false or intent.fire
+  if not wantsFire and not sequence then
+    shootVector = Vector(0, 0)
+  end
+  encodeDirectionalIntent(outputs, shootVector, actionMap.shoot)
 
   outputs.pressed[ButtonAction.ACTION_SHOOTLEFT] = outputs.pressed[ButtonAction.ACTION_SHOOTLEFT] or false
   outputs.pressed[ButtonAction.ACTION_SHOOTRIGHT] = outputs.pressed[ButtonAction.ACTION_SHOOTRIGHT] or false
@@ -125,6 +145,8 @@ function Act.update(state)
     outputs.pressed[ButtonAction.ACTION_PILLCARD] = false
   end
   outputs.values[ButtonAction.ACTION_PILLCARD] = outputs.pressed[ButtonAction.ACTION_PILLCARD] and 1 or 0
+
+  apply_sequence_controls(outputs, sequence)
 
   state.act.lastIntentFrame = state.frame
 end
