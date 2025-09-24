@@ -1,3 +1,17 @@
+do
+  local scriptDirectory = "content/"
+  local patterns = {
+    scriptDirectory .. "?.lua",
+    scriptDirectory .. "?/init.lua",
+  }
+
+  for _, pattern in ipairs(patterns) do
+    if not string.find(package.path, pattern, 1, true) then
+      package.path = pattern .. ";" .. package.path
+    end
+  end
+end
+
 local AutoCombatMod = RegisterMod("Auto Combat Handler", 1)
 
 local game = Game()
