@@ -10,6 +10,26 @@ local controller = require("isaac_auto_combat.lib.controller")
 local defaults = require("isaac_auto_combat.config.defaults")
 local userPrefs = require("isaac_auto_combat.config.user_prefs")
 
+local TOGGLE_FEEDBACK_DURATION = 90
+
+local function record_toggle_feedback(state)
+  if not state then
+    return
+  end
+
+  state.toggleToast = state.toggleToast or {}
+  state.toggleToast.message = state.enabled and "AutoCombat ON" or "AutoCombat OFF"
+  state.toggleToast.frame = state.frame or 0
+  state.toggleToast.duration = TOGGLE_FEEDBACK_DURATION
+
+  if game and game.GetHUD then
+    local hud = game:GetHUD()
+    if hud and hud.ShowFortuneText then
+      hud:ShowFortuneText(state.toggleToast.message)
+    end
+  end
+end
+
 local function toggle_enabled(state)
   if not state then
     return false
@@ -36,16 +56,16 @@ local function toggle_enabled(state)
   end
 
   controller.reset(state)
+  record_toggle_feedback(state)
 
   return true
 end
 
 local function resolve_toggle_key(config)
-  if not config then
-    return nil
+  local key = nil
+  if config then
+    key = config.toggleKey
   end
-
-  local key = config.toggleKey
 
   if type(key) ~= "number" then
     key = nil
@@ -107,7 +127,13 @@ local function on_post_update()
   local playerPos = player and player.Position or nil
   blackboard.update(state, playerPos)
 
-  if player and Input and Input.IsButtonTriggered then
+  if state.toggleToast and state.toggleToast.frame and state.toggleToast.duration then
+    if (state.frame or 0) - state.toggleToast.frame > state.toggleToast.duration then
+      state.toggleToast = nil
+    end
+  end
+
+  if Input and Input.IsButtonTriggered then
     local toggleKey = resolve_toggle_key(state.config)
 
     if toggleKey ~= nil then
@@ -117,9 +143,11 @@ local function on_post_update()
         toggled = toggle_enabled(state)
       end
 
-      local controllerIndex = player.ControllerIndex or 0
-      if not toggled and controllerIndex > 0 and Input.IsButtonTriggered(toggleKey, controllerIndex) then
-        toggle_enabled(state)
+      if not toggled and player then
+        local controllerIndex = player.ControllerIndex or 0
+        if controllerIndex > 0 and Input.IsButtonTriggered(toggleKey, controllerIndex) then
+          toggle_enabled(state)
+        end
       end
     end
   end
@@ -137,6 +165,13 @@ end
 
 local function on_post_render()
   debugui.render(state)
+
+  local toast = state.toggleToast
+  if toast and toast.message and toast.frame and toast.duration then
+    if (state.frame or 0) - toast.frame <= toast.duration then
+      Isaac.RenderText(toast.message, 100, 100, 1, 1, 1, 1)
+    end
+  end
 end
 
 local function on_post_new_room()
