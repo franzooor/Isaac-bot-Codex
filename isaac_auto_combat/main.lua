@@ -86,8 +86,11 @@ end
 
 local function on_input_action(_, entity, hook, action)
   local player = entity and entity:ToPlayer()
-  if player and player.ControllerIndex ~= 0 then
-    return nil
+  if player then
+    local controllerIndex = player.ControllerIndex or 0
+    if controllerIndex > 0 then
+      return nil
+    end
   end
 
   if player and hook == InputHook.IS_ACTION_PRESSED and action == state.config.toggleAction and state.enabled then
