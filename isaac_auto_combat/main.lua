@@ -10,6 +10,30 @@ local controller = require("isaac_auto_combat.lib.controller")
 local defaults = require("isaac_auto_combat.config.defaults")
 local userPrefs = require("isaac_auto_combat.config.user_prefs")
 
+local function toggle_enabled(state)
+  if not state then
+    return false
+  end
+
+  if state.lastToggleFrame == state.frame then
+    return false
+  end
+
+  state.enabled = not state.enabled
+  state.lastToggleFrame = state.frame
+
+  if state.enabled then
+    state.mode = "idle"
+  else
+    state.mode = "manual"
+    blackboard.reset_intent(state)
+  end
+
+  controller.reset(state)
+
+  return true
+end
+
 local function deep_copy(tbl)
   if type(tbl) ~= "table" then
     return tbl
@@ -59,6 +83,13 @@ local function on_post_update()
   local playerPos = player and player.Position or nil
   blackboard.update(state, playerPos)
 
+  if player and state.config.toggleKey and Input and Input.IsButtonTriggered then
+    local controllerIndex = player.ControllerIndex or 0
+    if controllerIndex <= 0 and Input.IsButtonTriggered(state.config.toggleKey, controllerIndex) then
+      toggle_enabled(state)
+    end
+  end
+
   if not state.enabled then
     state.mode = "manual"
   elseif state.mode == "manual" then
@@ -93,32 +124,21 @@ local function on_input_action(_, entity, hook, action)
     end
   end
 
-  if player and hook == InputHook.IS_ACTION_PRESSED and action == state.config.toggleAction and state.enabled then
-    return false
-  end
-
-  if player and hook == InputHook.GET_ACTION_VALUE and action == state.config.toggleAction and state.enabled then
-    return 0
-  end
-
-  if player and hook == InputHook.IS_ACTION_TRIGGERED and action == state.config.toggleAction then
-    local toggled = false
-    if state.lastToggleFrame ~= state.frame then
-      state.enabled = not state.enabled
-      state.lastToggleFrame = state.frame
-      toggled = true
-      if state.enabled then
-        state.mode = "idle"
-        controller.reset(state)
-      else
-        state.mode = "manual"
-        blackboard.reset_intent(state)
-        controller.reset(state)
-      end
+  if state.config.toggleAction ~= nil then
+    if player and hook == InputHook.IS_ACTION_PRESSED and action == state.config.toggleAction and state.enabled then
+      return false
     end
 
-    if toggled or state.enabled then
-      return false
+    if player and hook == InputHook.GET_ACTION_VALUE and action == state.config.toggleAction and state.enabled then
+      return 0
+    end
+
+    if player and hook == InputHook.IS_ACTION_TRIGGERED and action == state.config.toggleAction then
+      local toggled = toggle_enabled(state)
+
+      if toggled or state.enabled then
+        return false
+      end
     end
   end
 
